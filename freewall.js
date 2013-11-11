@@ -87,7 +87,7 @@
 			setTimeout(function() {
 				layout.busy = 0;
 				setting.onResize["call"](klass, container);
-			}, 255);
+			}, 112);
 			container.attr('data-min-width', Math.floor($(window).width() / 80) * 80);
 		});
 
@@ -95,21 +95,41 @@
 		function loadBlock(item, index) {
 			var $item = $(item), block = null, id = layout.lastId++ + '-' + flexIndex;
 			var gutterX = layout.gutterX, gutterY = layout.gutterY;
-			// store original size;
-			$item.attr('data-height') == null && $item.attr('data-height', $item.height());
-			$item.attr('data-width') == null && $item.attr('data-width', $item.width());
 			$item.attr({ id: id, 'data-delay': index });
-			var fixSize = eval($item.attr('data-fixSize'));
-			fixSize == null && (fixSize = setting.fixSize);
+			
+			if ($item.attr('data-width') == undefined) {
+				// store init width;
+				if (item.style.width) {
+					$item.attr('data-width', $item.width());
+				} else {
+					$item.attr('data-width', "");
+				}
+			} else {
+				// back up the width;
+				$item.width($item.attr('data-width'));
+			}
+			var width = $item.width();
 
-			var height = 1 * $item.attr('data-height');
-			var width = 1 * $item.attr('data-width');
+			if ($item.attr('data-height') == undefined) {
+				// store init height;
+				if (item.style.height) {
+					$item.attr('data-height', $item.height());
+				} else {
+					$item.attr('data-height', "");
+				}
+			} else {
+				// back up the height;
+				$item.height($item.attr('data-height'));
+			}
+			var height = $item.height();
+
 			var cellW = layout.cellW;
 			var cellH = layout.cellH;
 			
 			var col = !width ? 0 : Math.round((width + gutterX) / (cellW + gutterX));
 			var row = !height ? 0 : Math.round((height + gutterY) / (cellH + gutterY));
 			
+			var fixSize = eval($item.attr('data-fixSize'));
 			// for none resize block;
 			if ((fixSize != null) && (col > layout.totalCol || row > layout.totalRow)) {
 				block = null;
@@ -206,8 +226,8 @@
 					var block = layout.block[id];
 					layout.length -= 1;
 					if (block.fixSize) {
-						block.height = 1 * $item.attr("data-height");
-						block.width = 1 * $item.attr("data-width");
+						block.height = 1 * $item.height();
+						block.width = 1 * $item.width();
 					}
 					$item["css"]({
 						position: 'absolute',
@@ -576,6 +596,8 @@
 				// correct unit to number;
 				cellW = 1 * cellW;
 				cellH = 1 * cellH;
+				cellH <= 1 && (cellH = cellH * height);
+				cellW <= 1 && (cellW = cellH);
 
 				// estimate total rows;
 				var totalRow = Math.max(1, Math.floor(height / cellH));
@@ -648,6 +670,8 @@
 				// correct unit to number;
 				cellW = 1 * cellW;
 				cellH = 1 * cellH;
+				cellW <= 1 && (cellW = cellW * width);
+				cellH <= 1 && (cellH = cellW);
 
 				// estimate total columns;
 				var totalCol = Math.max(1, Math.floor(width / cellW));
@@ -722,6 +746,8 @@
 				// correct unit to number;
 				cellW = 1 * cellW;
 				cellH = 1 * cellH;
+				cellW <= 1 && (cellW = cellW * width);
+				cellH <= 1 && (cellH = cellH * height);
 
 				// estimate total columns;
 				var totalCol = Math.max(1, Math.floor(width / cellW));
