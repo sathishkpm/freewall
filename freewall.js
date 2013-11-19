@@ -87,7 +87,7 @@
 			setTimeout(function() {
 				layout.busy = 0;
 				setting.onResize["call"](klass, container);
-			}, 112);
+			}, 122);
 			container.attr('data-min-width', Math.floor($(window).width() / 80) * 80);
 		});
 
@@ -95,8 +95,24 @@
 		function loadBlock(item, index) {
 			var $item = $(item), block = null, id = layout.lastId++ + '-' + flexIndex;
 			var gutterX = layout.gutterX, gutterY = layout.gutterY;
+			var fixSize = eval($item.attr('data-fixSize'));
 			$item.attr({ id: id, 'data-delay': index });
 			
+			//remove animation for speed render;
+			if (setting.animate && layout.transition) {
+				if (style.webkitTransition != null) {
+					style.webkitTransition = "";
+				} else if (style.MozTransition != null) {
+					style.MozTransition = "";
+				} else if (style.msTransition) {
+					style.msTransition = "";
+				} else if (style.OTransition) {
+					style.OTransition = "";
+				} else {
+					style.transition = "";
+				}
+			}
+
 			if ($item.attr('data-width') == undefined) {
 				// store init width;
 				if (item.style.width) {
@@ -123,13 +139,26 @@
 			}
 			var height = $item.height();
 
+
 			var cellW = layout.cellW;
 			var cellH = layout.cellH;
 			
 			var col = !width ? 0 : Math.round((width + gutterX) / (cellW + gutterX));
 			var row = !height ? 0 : Math.round((height + gutterY) / (cellH + gutterY));
+
+			// estimate size;
+			if (!fixSize && setting.cellH == 'auto') {
+				$item.width(col ? cellW * col + gutterX * (col - 1) : cellW * col);
+				height = $item.height();
+				row = !height ? 0 : Math.round((height + gutterY) / (cellH + gutterY));
+			}
+
+			if (!fixSize && setting.cellW == 'auto') {
+				$item.height(row ? cellH * row + gutterY * (row - 1) : cellH * row);
+				width = $item.width();
+				col = !width ? 0 : Math.round((width + gutterX) / (cellW + gutterX));
+			}
 			
-			var fixSize = eval($item.attr('data-fixSize'));
 			// for none resize block;
 			if ((fixSize != null) && (col > layout.totalCol || row > layout.totalRow)) {
 				block = null;
@@ -226,8 +255,8 @@
 					var block = layout.block[id];
 					layout.length -= 1;
 					if (block.fixSize) {
-						block.height = 1 * $item.height();
-						block.width = 1 * $item.width();
+						block.height = 1 * $item.attr("data-height");
+						block.width = 1 * $item.attr("data-width");
 					}
 					$item["css"]({
 						position: 'absolute',
@@ -587,16 +616,22 @@
 				layout.gutterY = gutterY;
 
 				// dynamic type of unit;
-				if ($.isFunction(cellH)) {
+				if (cellH == 'auto') {
+					cellH = 20;
+				} else if ($.isFunction(cellH)) {
 					cellH = cellH.call(this, container);
 				}
-				if ($.isFunction(cellW)) {
+
+				if (cellW == 'auto') {
+					cellW = 20;
+				} else if ($.isFunction(cellW)) {
 					cellW = cellW.call(this, container);
 				}
+
 				// correct unit to number;
 				cellW = 1 * cellW;
 				cellH = 1 * cellH;
-				cellH <= 1 && (cellH = cellH * height);
+				cellH <= 1 && (cellH *= height);
 				cellW <= 1 && (cellW = cellH);
 
 				// estimate total rows;
@@ -661,16 +696,22 @@
 				layout.gutterY = gutterY;
 				
 				// dynamic type of unit;
-				if ($.isFunction(cellH)) {
+				if (cellH == 'auto') {
+					cellH = 2;
+				} else if ($.isFunction(cellH)) {
 					cellH = cellH.call(this, container);
 				}
-				if ($.isFunction(cellW)) {
+
+				if (cellW == 'auto') {
+					cellW = 2;
+				} else if ($.isFunction(cellW)) {
 					cellW = cellW.call(this, container);
 				}
+
 				// correct unit to number;
 				cellW = 1 * cellW;
 				cellH = 1 * cellH;
-				cellW <= 1 && (cellW = cellW * width);
+				cellW <= 1 && (cellW *= width);
 				cellH <= 1 && (cellH = cellW);
 
 				// estimate total columns;
@@ -737,17 +778,23 @@
 				layout.gutterY = gutterY;
 
 				// dynamic type of unit;
-				if ($.isFunction(cellH)) {
+				if (cellH == 'auto') {
+					cellH = 20;
+				} else if ($.isFunction(cellH)) {
 					cellH = cellH.call(this, container);
 				}
-				if ($.isFunction(cellW)) {
+
+				if (cellW == 'auto') {
+					cellW = 20;
+				} else if ($.isFunction(cellW)) {
 					cellW = cellW.call(this, container);
 				}
+
 				// correct unit to number;
 				cellW = 1 * cellW;
 				cellH = 1 * cellH;
-				cellW <= 1 && (cellW = cellW * width);
-				cellH <= 1 && (cellH = cellH * height);
+				cellW <= 1 && (cellW *= width);
+				cellH <= 1 && (cellH *= height);
 
 				// estimate total columns;
 				var totalCol = Math.max(1, Math.floor(width / cellW));
